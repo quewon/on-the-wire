@@ -137,10 +137,12 @@ function update_player() {
         if (player_line_length_to_point < 0) {
             player_line_length_to_point = 0;
             player_line_velocity = 0;
+            player_velocity[0] = 0;
         }
         if (player_line_length_to_point > player_line_length) {
             player_line_length_to_point = player_line_length;
             player_line_velocity = 0;
+            player_velocity[0] = 0;
         }
 
         length_to_point = player_line_length_to_point;
