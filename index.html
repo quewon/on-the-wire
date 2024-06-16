@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>on the wire</title>
+    <style>
+        :root {
+            --color: rgb(18, 23, 47);
+            --bg: rgb(220, 226, 230);
+        }
+
+        body, html {
+            margin: 0;
+        }
+        
+        body {
+            overflow: hidden;
+        }
+
+        canvas {
+            position: absolute;
+        }
+
+        .lines {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            translate: -50% -50%;
+        }
+
+        .lines button {
+            display: block;
+            border: none;
+            background: inherit;
+            margin: unset;
+            font-family: inherit;
+            font-size: inherit;
+            scale: 1 1;
+            padding: 2px 0px;
+            /* margin-bottom: .5em; */
+        }
+
+        .lines h1 {
+            font-weight: normal;
+            font-size: inherit;
+            margin: 0;
+            margin-bottom: 1em;
+        }
+
+        button.selected {
+            background: var(--color);
+            color: var(--bg);
+        }
+        button:hover, button:focus {
+            cursor: pointer;
+            color: red;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas></canvas>
+
+</body>
+
+<script src="draw.js"></script>
+<script src="input.js"></script>
+<script src="player.js"></script>
+
+<script>
+    window.onload = function() {
+        window.onresize();
+
+        player_point = [width/2, height/2];
+
+        draw();
+    }
+</script>
+
+</html>
