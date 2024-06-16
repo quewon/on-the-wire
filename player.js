@@ -19,6 +19,8 @@ function draw_player() {
     let x = player_point[0];
     let y = player_point[1];
 
+    context.strokeStyle = "black";
+
     context.beginPath();
     context.arc(x, y - jump_windup, player_radius, 0, Math.PI*2);
     context.stroke();
@@ -80,12 +82,11 @@ function update_player() {
 
         var length_to_point = player_line_length_to_point;
         var segment;
-        var p = prev_point;
         var length = 0;
 
-        for (let i=1; i<player_line.length; i++) {
-            let a = player_line[i-1];
-            let b = player_line[i];
+        for (let i=1; i<player_line.points.length; i++) {
+            let a = player_line.points[i-1];
+            let b = player_line.points[i];
             let distance = Math.sqrt(sqr_distance(a, b));
 
             if (length_to_point >= length && length_to_point <= length + distance) {
@@ -97,7 +98,7 @@ function update_player() {
         }
 
         if (!segment) {
-            segment = [player_line[0], player_line[1]];
+            segment = [player_line.points[0], player_line.points[1]];
         }
 
         context.strokeStyle = "red";
@@ -124,7 +125,10 @@ function update_player() {
             slope = Math.sign(player_line_velocity) * 2;
         }
 
-        player_line_velocity /= 1 + friction * delta;
+        if (player_line.mode == "normal") {
+            player_line_velocity /= 1 + friction * delta;
+            player_velocity[0] /= 1 + friction * delta;
+        }
 
         player_line_velocity += slope * delta / 2;
         player_velocity[0] += slope * delta / 2 * player_segment_dir;
@@ -142,9 +146,9 @@ function update_player() {
         length_to_point = player_line_length_to_point;
         length = 0;
         rest_point;
-        for (let i=1; i<player_line.length; i++) {
-            let a = player_line[i-1];
-            let b = player_line[i];
+        for (let i=1; i<player_line.points.length; i++) {
+            let a = player_line.points[i-1];
+            let b = player_line.points[i];
             let distance = Math.sqrt(sqr_distance(a, b));
 
             if (length_to_point >= length && length_to_point <= length + distance) {
@@ -161,14 +165,12 @@ function update_player() {
 
         if (rest_point) player_point = rest_point;
     } else {
-        // player_velocity[0] /= 1 + friction * delta;
-        
+        player_velocity[0] /= 1 + friction * delta;
+
         player_velocity[1] += gravity * delta;
         player_point[0] += player_velocity[0] * delta / 1000;
         player_point[1] += player_velocity[1] * delta / 1000;  
     }
-
-    player_velocity[0] /= 1 + friction * delta;
 
     // collision
 
@@ -196,12 +198,12 @@ function update_player() {
         var rest_point;
         var rest_line;
 
-        for (let points of lines) {
-            for (let i=1; i<points.length; i++) {
-                let p1 = points[i-1];
-                let p2 = points[i];
+        for (let line of lines) {
+            for (let i=1; i<line.points.length; i++) {
+                let p1 = line.points[i-1];
+                let p2 = line.points[i];
                 let p = intersection(prev_point, new_point, p1, p2);
-                if (p) intersections.push([p, points]);
+                if (p) intersections.push([p, line]);
             }
         }
 
@@ -240,9 +242,9 @@ function update_player() {
             var length_to_point = 0;
 
             let p = rest_point;
-            for (let i=1; i<player_line.length; i++) {
-                let a = player_line[i-1];
-                let b = player_line[i];
+            for (let i=1; i<player_line.points.length; i++) {
+                let a = player_line.points[i-1];
+                let b = player_line.points[i];
                 
                 if (
                     p[0] >= Math.min(a[0], b[0]) && p[0] <= Math.max(a[0], b[0]) && 
