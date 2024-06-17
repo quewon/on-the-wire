@@ -18,6 +18,8 @@ var gravity = 1.5;
 
 var player_can_jump = false;
 
+// var trail = [];
+
 function draw_player() {
     let x = player_point[0];
     let y = player_point[1];
@@ -25,9 +27,17 @@ function draw_player() {
     context.strokeStyle = player_can_jump ? "blue" : "black";
     context.fillStyle = player_can_jump ? "blue" : "black";
 
+    // if (trail.length > 0) {
+    //     context.lineWidth = player_radius * 2;
+    //     context.globalAlpha = .1;
+    //     draw_line(trail);
+    //     context.globalAlpha = 1;
+    //     context.lineWidth = 1;
+    // }
+
     context.beginPath();
-    context.moveTo(x, y);
-    context.lineTo(x, y - jump_windup + player_radius);
+    // context.moveTo(x, y);
+    // context.lineTo(x, y - jump_windup + player_radius);
     context.arc(x, y - jump_windup, player_radius, Math.PI/2, Math.PI*2.5);
     context.stroke();
 
@@ -119,11 +129,10 @@ function update_player() {
         if (player_line.mode == "normal") {
             player_line_velocity /= 1 + friction * delta;
             player_velocity[0] /= 1 + friction * delta;
-        } else if (player_line.mode == "fast") {
-            player_velocity[0] = player_line_velocity * player_segment_dir;
         }
 
         player_line_velocity += slope * delta / 2;
+        player_velocity[0] = player_line_velocity * player_segment_dir;
 
         player_line_length_to_point += player_line_velocity * delta / 1000;
         if (player_line_length_to_point < 0) {
@@ -271,6 +280,11 @@ function update_player() {
             player_velocity[0] = 1;
         }
     }
+
+    // trail.push([player_point[0], player_point[1]]);
+    // if (trail.length > 100) {
+    //     trail.shift();
+    // }
 
     //
 
