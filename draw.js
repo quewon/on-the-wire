@@ -1,11 +1,19 @@
 var WINDOW_HIDDEN = false;
 
+var cursor = new Image();
+cursor.src = "pencil.svg";
+var cursor_visible = true;
+
 var canvas = document.querySelector("canvas");
 var context = canvas.getContext("2d");
 var width;
 var height;
 
 var lines = [];
+
+var _previous_time = new Date();
+var delta;
+var elapsed = 0;
 
 window.onresize = function() {
     width = window.innerWidth;
@@ -17,7 +25,17 @@ window.onresize = function() {
     canvas.style.height = height + "px";
 }
 
+document.addEventListener("visibilitychange", () => {
+    WINDOW_HIDDEN = document.hidden;
+    if (!WINDOW_HIDDEN) _previous_time = new Date();
+});
+
 function draw() {
+    if (WINDOW_HIDDEN) {
+        requestAnimationFrame(draw);
+        return;
+    }
+
     context.clearRect(0, 0, canvas.width, canvas.height);
 
     context.resetTransform();
@@ -28,10 +46,21 @@ function draw() {
         draw_line(line.points);
     }
 
+    var now = new Date();
+    delta = now - _previous_time;
+    elapsed += delta;
+
+    update_timer();
     update_player();
     draw_player();
 
-    if (!WINDOW_HIDDEN) requestAnimationFrame(draw);
+    if (cursor_visible) {
+        context.drawImage(cursor, mouse[0] - 3, mouse[1] - 22, 25, 25);
+    }
+
+    _previous_time = now;
+
+    requestAnimationFrame(draw);
 }
 
 function draw_line(points) {
@@ -70,6 +99,8 @@ canvas.oncontextmenu = function(e) {
 
 document.onmousemove = function(e) {
     mouse = [e.pageX, e.pageY];
+
+    cursor_visible = true;
 
     if (mousedown) {
         let current_line = lines[lines.length-1];

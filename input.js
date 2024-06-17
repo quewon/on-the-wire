@@ -8,6 +8,8 @@ var keymap = {
 }
 
 document.onkeydown = function(e) {
+    cursor_visible = false;
+
     keysdown[e.code] = true;
 }
 

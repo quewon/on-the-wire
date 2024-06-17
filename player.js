@@ -11,18 +11,24 @@ var player_radius = 5;
 
 var jump_windup = 0;
 var max_jump_windup = 300;
+var stored_windup;
 
 var friction = .002;
 var gravity = 1.5;
+
+var player_can_jump = false;
 
 function draw_player() {
     let x = player_point[0];
     let y = player_point[1];
 
-    context.strokeStyle = "black";
+    context.strokeStyle = player_can_jump ? "blue" : "black";
+    context.fillStyle = player_can_jump ? "blue" : "black";
 
     context.beginPath();
-    context.arc(x, y - jump_windup, player_radius, 0, Math.PI*2);
+    context.moveTo(x, y);
+    context.lineTo(x, y - jump_windup + player_radius);
+    context.arc(x, y - jump_windup, player_radius, Math.PI/2, Math.PI*2.5);
     context.stroke();
 
     context.beginPath();
@@ -30,22 +36,7 @@ function draw_player() {
     context.fill();
 }
 
-document.addEventListener("visibilitychange", () => {
-    WINDOW_HIDDEN = document.hidden;
-
-    if (!WINDOW_HIDDEN) {
-        _previous_time = new Date();
-        draw();
-    }
-});
-
-var _previous_time = new Date();
 function update_player() {
-    var now = new Date();
-    var delta = now - _previous_time;
-
-    //
-
     var prev_point = [player_point[0], player_point[1]];
     var new_point;
 
@@ -53,13 +44,13 @@ function update_player() {
         jump_windup = lerp(jump_windup, max_jump_windup, delta/1000);
     }
 
-    if (keydown('down')) {
-        player_line = null;
-        player_point[1] += 2;
-        player_velocity[0] = 1;
+    if (keyreleased('jump')) {
+        stored_windup = jump_windup;
     }
 
-    if (keyreleased('jump')) {
+    if (stored_windup && player_can_jump) {
+        player_can_jump = false;
+        stored_windup = null;
         player_line = null;
         player_velocity[1] -= Math.sqrt(gravity * jump_windup * 3000);
         jump_windup = 0;
@@ -101,14 +92,14 @@ function update_player() {
             segment = [player_line.points[0], player_line.points[1]];
         }
 
-        context.strokeStyle = "red";
-        context.lineWidth = 3;
-        context.beginPath();
-        context.moveTo(segment[0][0], segment[0][1]);
-        context.lineTo(segment[1][0], segment[1][1]);
-        context.stroke();
-        context.lineWidth = 1;
-        context.strokeStyle = "black";
+        // context.strokeStyle = "red";
+        // context.lineWidth = 3;
+        // context.beginPath();
+        // context.moveTo(segment[0][0], segment[0][1]);
+        // context.lineTo(segment[1][0], segment[1][1]);
+        // context.stroke();
+        // context.lineWidth = 1;
+        // context.strokeStyle = "black";
 
         var a = segment[0];
         var b = segment[1];
@@ -128,10 +119,11 @@ function update_player() {
         if (player_line.mode == "normal") {
             player_line_velocity /= 1 + friction * delta;
             player_velocity[0] /= 1 + friction * delta;
+        } else if (player_line.mode == "fast") {
+            player_velocity[0] = player_line_velocity * player_segment_dir;
         }
 
         player_line_velocity += slope * delta / 2;
-        player_velocity[0] += slope * delta / 2 * player_segment_dir;
 
         player_line_length_to_point += player_line_velocity * delta / 1000;
         if (player_line_length_to_point < 0) {
@@ -176,26 +168,27 @@ function update_player() {
 
     // collision
 
-    if (player_point[1] < player_radius) {
+    if (player_point[1] < 0) {
         player_velocity[1] = -player_velocity[1] / 2;
-        player_point[1] = player_radius;
+        player_point[1] = 0;
     }
-    if (player_point[1] > height - player_radius) {
+    if (player_point[1] > height) {
         player_velocity[1] = -player_velocity[1] / 2;
-        player_point[1] = height - player_radius;
+        player_point[1] = height;
+        player_can_jump = true;
     }
-    if (player_point[0] < player_radius) {
+    if (player_point[0] < 0) {
         player_velocity[0] = -player_velocity[0] / 2;
-        player_point[0] = player_radius;
+        player_point[0] = 0;
     }
-    if (player_point[0] > width - player_radius) {
+    if (player_point[0] > width) {
         player_velocity[0] = -player_velocity[0] / 2;
-        player_point[0] = width - player_radius;
+        player_point[0] = width;
     }
 
     new_point = [player_point[0], player_point[1]];
 
-    if (player_velocity[1] > 0) {
+    if (!player_line && player_velocity[1] > 0) {
         var intersections = [];
         var rest_point;
         var rest_line;
@@ -267,6 +260,15 @@ function update_player() {
             player_line_length = line_length;
             player_line_length_to_point = length_to_point;
             player_line_velocity = (player_velocity[0] + player_velocity[1] * 100) * player_segment_dir;
+            player_can_jump = true;
+        }
+    }
+
+    if (keydown('down')) {
+        if (player_line) {
+            player_line = null;
+            player_point[1] += 2;
+            player_velocity[0] = 1;
         }
     }
 
@@ -275,8 +277,6 @@ function update_player() {
     for (let key in keysreleased) {
         keysreleased[key] = false;
     }
-
-    _previous_time = now;
 }
 
 function lerp(a, b, t) {
